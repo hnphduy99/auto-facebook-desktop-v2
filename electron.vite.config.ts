@@ -33,6 +33,14 @@ export default defineConfig({
         }
       }
     },
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src")
+      }
+    },
+    css: {
+      devSourcemap: true
+    },
     plugins: [react(), tailwindcss()]
   }
 });
