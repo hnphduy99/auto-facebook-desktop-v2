@@ -1,4 +1,5 @@
 import electronLogo from "@/assets/electron.svg";
+import { ModeToggle } from "@/components/ModeToggle";
 import Versions from "@/components/Versions";
 import { JSX } from "react";
 
@@ -7,6 +8,7 @@ const HomeScreen = (): JSX.Element => {
 
   return (
     <>
+      <ModeToggle></ModeToggle>
       <img alt="logo" className="logo" src={electronLogo} />
       <div className="creator">Powered by electron-vite</div>
       <div className="text">
