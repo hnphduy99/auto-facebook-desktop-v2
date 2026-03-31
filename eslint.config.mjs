@@ -2,7 +2,6 @@ import eslintConfigPrettier from "@electron-toolkit/eslint-config-prettier";
 import tseslint from "@electron-toolkit/eslint-config-ts";
 import eslintPluginPrettier from "eslint-plugin-prettier";
 import eslintPluginReact from "eslint-plugin-react";
-import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import eslintPluginReactRefresh from "eslint-plugin-react-refresh";
 import { defineConfig } from "eslint/config";
 
@@ -19,9 +18,7 @@ export default defineConfig(
     }
   },
   {
-    files: ["**/*.{ts,tsx}"],
     plugins: {
-      "react-hooks": eslintPluginReactHooks,
       "react-refresh": eslintPluginReactRefresh,
       prettier: eslintPluginPrettier
     },
