@@ -1,6 +1,7 @@
 import { app, dialog, ipcMain } from "electron";
 import fs from "fs";
 import path from "path";
+import { runApiFacebookPosts } from "../services/api-facebook.service.js";
 import { accountService } from "../services/account.service.js";
 import { browserService } from "../services/browser.service.js";
 import { campaignService } from "../services/campaign.service.js";
@@ -297,6 +298,43 @@ export function registerAllIPC(): void {
   });
 
   ipcMain.handle("license:getLimits", () => licenseService.getLimits());
+
+  // ===== API FACEBOOK (Direct API) =====
+  ipcMain.handle("apiFacebook:run", async (_event, params) => {
+    try {
+      const results = await runApiFacebookPosts(params);
+      return { success: true, results };
+    } catch (error: any) {
+      sendLog(`[API Facebook] Lỗi: ${error.message}`, "error");
+      return { success: false, error: error.message, results: [] };
+    }
+  });
+
+  ipcMain.handle("apiFacebook:selectImage", async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ["openFile", "multiSelections"],
+      filters: [{ name: "Images", extensions: ["jpg", "jpeg", "png", "gif", "webp", "bmp"] }]
+    });
+    if (result.canceled || result.filePaths.length === 0) return [];
+    
+    const uploadsDir = store.getUploadsDir();
+    const copiedPaths: string[] = [];
+    
+    for (const srcPath of result.filePaths) {
+      if (srcPath.startsWith(uploadsDir)) {
+        copiedPaths.push(srcPath);
+        continue;
+      }
+      
+      const ext = path.extname(srcPath);
+      const baseName = path.basename(srcPath, ext);
+      const destPath = path.join(uploadsDir, `${baseName}_${Date.now()}_${Math.floor(Math.random() * 1000)}${ext}`);
+      
+      fs.copyFileSync(srcPath, destPath);
+      copiedPaths.push(destPath);
+    }
+    return copiedPaths;
+  });
 
   // ===== APP INFO =====
   ipcMain.handle("app:getVersion", () => app.getVersion());

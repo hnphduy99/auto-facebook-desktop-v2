@@ -19,6 +19,7 @@ const ScheduleScreen = lazy(() => import("@/screens/schedule/ScheduleScreen"));
 const LogsScreen = lazy(() => import("@/screens/logs/LogsScreen"));
 const LicenseScreen = lazy(() => import("@/screens/license/LicenseScreen"));
 const OnboardingScreen = lazy(() => import("@/screens/onboarding/OnboardingScreen"));
+const ApiFacebookScreen = lazy(() => import("@/screens/api-facebook/ApiFacebookScreen"));
 
 const DISCLAIMER_ACCEPTED_KEY = "disclaimer_accepted_v1";
 
@@ -87,6 +88,7 @@ function AppShell() {
                 <Route path="/schedule" element={<ScheduleScreen />} />
                 <Route path="/logs" element={<LogsScreen />} />
                 <Route path="/license" element={<LicenseScreen />} />
+                <Route path="/api-facebook" element={<ApiFacebookScreen />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </AnimatePresence>

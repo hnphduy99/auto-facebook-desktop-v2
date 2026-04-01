@@ -386,19 +386,28 @@ export class BrowserService {
       }
     }
 
-    // === INTERCEPTOR: Bắt link bài đăng từ network requests/responses ===
+    // === INTERCEPTOR: Bắt link bài đăng từ GraphQL response ===
     let interceptedPostUrl: string | null = null;
-    const postUrlRegex = /\/groups\/\d+\/(posts|permalink)\/\d+/;
 
-    // Bắt từ REQUEST URL (bulk-route-definitions gửi path bài viết ngay trong URL)
-    const requestHandler = (request: any) => {
+    const responseHandler = async (response: any) => {
       try {
-        const reqUrl = request.url();
-        if (reqUrl.includes("bulk-route-definitions")) {
-          const match = reqUrl.match(postUrlRegex);
-          if (match && !interceptedPostUrl) {
-            interceptedPostUrl = `https://www.facebook.com${match[0]}`;
-            sendLog(`${prefix}[Interceptor] Bắt được URL từ request: ${interceptedPostUrl}`, "info", campaignId);
+        if (interceptedPostUrl) return;
+        if (!response.url().includes("/api/graphql")) return;
+        const buffer = await response.buffer();
+        const text = buffer.toString("utf-8");
+        for (const line of text.split("\n")) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            const json = JSON.parse(trimmed);
+            const postUrl = json?.data?.story_create?.story?.url;
+            if (postUrl && typeof postUrl === "string") {
+              interceptedPostUrl = postUrl;
+              sendLog(`${prefix}[Interceptor] Bắt được link bài đăng: ${interceptedPostUrl}`, "info", campaignId);
+              return;
+            }
+          } catch {
+            // skip dòng không parse được
           }
         }
       } catch {
@@ -406,29 +415,6 @@ export class BrowserService {
       }
     };
 
-    // Bắt từ RESPONSE BODY (fallback nếu URL không chứa path)
-    const responseHandler = async (response: any) => {
-      try {
-        if (interceptedPostUrl) return; // Đã có rồi thì thôi
-        const resUrl = response.url();
-        if (resUrl.includes("bulk-route-definitions") || resUrl.includes("/api/graphql")) {
-          const contentType = response.headers()["content-type"] || "";
-          if (!contentType.includes("javascript") && !contentType.includes("json") && !contentType.includes("text"))
-            return;
-          const buffer = await response.buffer();
-          const text = buffer.toString("utf-8");
-          const match = text.match(postUrlRegex);
-          if (match && !interceptedPostUrl) {
-            interceptedPostUrl = `https://www.facebook.com${match[0]}`;
-            sendLog(`${prefix}[Interceptor] Bắt được URL từ response body: ${interceptedPostUrl}`, "info", campaignId);
-          }
-        }
-      } catch {
-        // Catch lỗi response body không đọc được
-      }
-    };
-
-    page.on("request", requestHandler);
     page.on("response", responseHandler);
 
     // Find and click Post button
@@ -462,7 +448,6 @@ export class BrowserService {
     }
 
     if (!postButtonFound) {
-      page.off("request", requestHandler);
       page.off("response", responseHandler);
       throw new Error("Không tìm thấy nút Đăng bài");
     }
@@ -490,7 +475,6 @@ export class BrowserService {
     }
 
     // Gỡ bắt listener
-    page.off("request", requestHandler);
     page.off("response", responseHandler);
 
     // Lấy URL bài đăng

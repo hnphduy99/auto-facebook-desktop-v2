@@ -7,7 +7,8 @@ export const en = {
     posts: "Posted Posts",
     commentCampaigns: "Comment Campaigns",
     schedule: "Schedule",
-    logs: "Logs"
+    logs: "Logs",
+    apiFacebook: "API Post"
   },
 
   dashboard: {

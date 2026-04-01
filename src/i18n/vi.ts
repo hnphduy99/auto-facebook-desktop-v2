@@ -7,7 +7,8 @@ export const vi = {
     posts: "Bài đã đăng",
     commentCampaigns: "Chiến dịch comment",
     schedule: "Lịch hẹn",
-    logs: "Nhật ký"
+    logs: "Nhật ký",
+    apiFacebook: "API Post"
   },
 
   dashboard: {

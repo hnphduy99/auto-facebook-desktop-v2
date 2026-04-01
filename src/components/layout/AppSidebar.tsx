@@ -11,7 +11,8 @@ import {
   Rocket,
   ScrollText,
   SquareFunction,
-  Users
+  Users,
+  Zap
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -37,6 +38,7 @@ const navItems = [
   { id: "posts", icon: LinkIcon, key: "posts" as const },
   { id: "commentCampaigns", icon: MessageCircle, key: "commentCampaigns" as const },
   { id: "schedule", icon: CalendarDays, key: "schedule" as const },
+  { id: "api-facebook", icon: Zap, key: "apiFacebook" as const },
   { id: "logs", icon: ScrollText, key: "logs" as const }
 ];
 

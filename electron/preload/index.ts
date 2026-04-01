@@ -189,7 +189,24 @@ const api = {
   // App info
   getAppVersion: (): Promise<string> => ipcRenderer.invoke("app:getVersion"),
   checkForUpdates: (): Promise<{ success: boolean; updateInfo?: any; error?: string }> =>
-    ipcRenderer.invoke("app:checkForUpdates")
+    ipcRenderer.invoke("app:checkForUpdates"),
+
+  // API Facebook (direct API posting)
+  runApiFacebook: (params: {
+    accountId: string;
+    groupUrls: string[];
+    message: string;
+    imagePaths?: string[];
+    delayMin?: number;
+    delayMax?: number;
+  }): Promise<{
+    success: boolean;
+    results: { groupUrl: string; success: boolean; photoId?: string; error?: string }[];
+    error?: string;
+  }> => ipcRenderer.invoke("apiFacebook:run", params),
+
+  selectApiFacebookImage: (): Promise<string[]> =>
+    ipcRenderer.invoke("apiFacebook:selectImage")
 };
 
 try {
