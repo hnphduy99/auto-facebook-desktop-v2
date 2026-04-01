@@ -1,0 +1,180 @@
+export const en = {
+  nav: {
+    dashboard: "Dashboard",
+    accounts: "Accounts",
+    contents: "Contents",
+    campaigns: "Post Campaigns",
+    posts: "Posted Posts",
+    commentCampaigns: "Comment Campaigns",
+    schedule: "Schedule",
+    logs: "Logs"
+  },
+
+  dashboard: {
+    title: "Dashboard",
+    totalAccounts: "Accounts",
+    totalContents: "Contents",
+    totalCampaigns: "Campaigns",
+    scheduledCount: "Scheduled",
+    successRate: "Success Rate",
+    recentCampaigns: "Recent Campaigns",
+    noCampaigns: "No campaigns yet",
+    quickActions: "Quick Actions",
+    newCampaign: "New Campaign",
+    addAccount: "Add Account",
+    createContent: "Create Content"
+  },
+
+  accounts: {
+    title: "Account Management",
+    addNew: "Add Account",
+    account: "Account (Email/Phone)",
+    accountPlaceholder: "Enter email or phone number",
+    password: "Password",
+    name: "Display Name",
+    status: "Status",
+    lastLogin: "Last Login",
+    actions: "Actions",
+    check: "Check",
+    edit: "Edit",
+    delete: "Delete",
+    active: "Active",
+    inactive: "Inactive",
+    error: "Error",
+    noAccounts: "No accounts yet. Add an account to get started!",
+    confirmDelete: "Are you sure you want to delete this account?",
+    addSuccess: "Account added successfully!",
+    deleteSuccess: "Account deleted!",
+    checking: "Checking..."
+  },
+
+  contents: {
+    title: "Content Management",
+    addNew: "Create New Content",
+    titleField: "Title",
+    body: "Post Content",
+    images: "Images",
+    selectImages: "Select Images",
+    noImages: "No images",
+    noContents: "No contents yet. Create content to use in campaigns!",
+    confirmDelete: "Are you sure you want to delete this content?",
+    preview: "Preview",
+    save: "Save",
+    cancel: "Cancel"
+  },
+
+  campaigns: {
+    title: "Campaign Management",
+    addNew: "Create New Campaign",
+    name: "Campaign Name",
+    account: "Account",
+    content: "Content",
+    groups: "Group List",
+    groupsPlaceholder: "Enter group URLs, one per line",
+    maxConcurrent: "Max Concurrent Browsers",
+    status: "Status",
+    run: "Run Now",
+    stop: "Stop",
+    schedule: "Schedule",
+    viewResults: "View Results",
+    noCampaigns: "No campaigns yet.",
+    confirmDelete: "Are you sure you want to delete this campaign?",
+    selectAccount: "Select Account",
+    selectContent: "Select Content",
+    statusDraft: "Draft",
+    statusRunning: "Running",
+    statusCompleted: "Completed",
+    statusFailed: "Failed",
+    statusScheduled: "Scheduled",
+    statusStopped: "Stopped",
+    results: "Results",
+    success: "Success",
+    failed: "Failed",
+    rerun: "Re-run"
+  },
+
+  schedule: {
+    title: "Post Scheduler",
+    scheduledAt: "Scheduled Time",
+    campaign: "Campaign",
+    cancel: "Cancel Schedule",
+    noScheduled: "No scheduled campaigns.",
+    setSchedule: "Set Schedule",
+    datetime: "Date & Time"
+  },
+
+  posts: {
+    title: "Posted Posts Management",
+    noPosts: "No posts yet.",
+    openPost: "Open Post",
+    commentSingle: "Comment",
+    campaign: "Campaign",
+    postedAt: "Posted At",
+    confirmDelete: "Are you sure you want to remove this post from the list?",
+    filterCampaign: "Filter by campaign",
+    searchPlaceholder: "Search by ID or snippet..."
+  },
+
+  commentCampaigns: {
+    title: "Comment Campaigns",
+    addNew: "Create New Campaign",
+    name: "Campaign Name",
+    account: "Account",
+    commentContent: "Comment Content",
+    commentImages: "Attached Images",
+    addComment: "Add Comment",
+    selectPosts: "Select Posts",
+    selectAll: "Select All",
+    delayComments: "Delay between comments",
+    delayPosts: "Delay between posts",
+    seconds: "seconds",
+    run: "Run Now",
+    rerun: "Re-run",
+    stop: "Stop",
+    viewResults: "View Results",
+    noCampaigns: "No comment campaigns yet.",
+    confirmDelete: "Are you sure you want to delete this comment campaign?"
+  },
+
+  logs: {
+    title: "Activity Logs",
+    clear: "Clear Logs",
+    noLogs: "No logs yet.",
+    filter: "Filter",
+    all: "All",
+    info: "Info",
+    success: "Success",
+    warning: "Warning",
+    error: "Error"
+  },
+
+  common: {
+    save: "Save",
+    cancel: "Cancel",
+    delete: "Delete",
+    edit: "Edit",
+    add: "Add",
+    close: "Close",
+    confirm: "Confirm",
+    search: "Search",
+    loading: "Loading...",
+    language: "Language",
+    noData: "No data"
+  },
+
+  validation: {
+    required: "This field is required",
+    accountRequired: "Please enter email or phone number",
+    accountInvalid: "Invalid email or phone number",
+    passwordRequired: "Please enter password",
+    passwordMin: "Password must be at least 6 characters",
+    titleRequired: "Please enter a title",
+    bodyRequired: "Please enter post content",
+    nameRequired: "Please enter campaign name",
+    accountSelect: "Please select an account",
+    contentSelect: "Please select content",
+    groupsRequired: "Please enter at least 1 group URL",
+    maxConcurrentMin: "Minimum 1 browser",
+    maxConcurrentMax: "Maximum 8 browsers"
+  }
+};

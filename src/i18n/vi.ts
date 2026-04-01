@@ -1,0 +1,180 @@
+export const vi = {
+  nav: {
+    dashboard: "Tổng quan",
+    accounts: "Tài khoản",
+    contents: "Nội dung",
+    campaigns: "Chiến dịch đăng",
+    posts: "Bài đã đăng",
+    commentCampaigns: "Chiến dịch comment",
+    schedule: "Lịch hẹn",
+    logs: "Nhật ký"
+  },
+
+  dashboard: {
+    title: "Tổng quan",
+    totalAccounts: "Tài khoản",
+    totalContents: "Nội dung",
+    totalCampaigns: "Chiến dịch",
+    scheduledCount: "Đã lên lịch",
+    successRate: "Tỷ lệ thành công",
+    recentCampaigns: "Chiến dịch gần đây",
+    noCampaigns: "Chưa có chiến dịch nào",
+    quickActions: "Thao tác nhanh",
+    newCampaign: "Tạo chiến dịch mới",
+    addAccount: "Thêm tài khoản",
+    createContent: "Tạo nội dung"
+  },
+
+  accounts: {
+    title: "Quản lý tài khoản",
+    addNew: "Thêm tài khoản",
+    account: "Tài khoản (Email/SĐT)",
+    accountPlaceholder: "Nhập email hoặc số điện thoại",
+    password: "Mật khẩu",
+    name: "Tên hiển thị",
+    status: "Trạng thái",
+    lastLogin: "Lần đăng nhập cuối",
+    actions: "Thao tác",
+    check: "Kiểm tra",
+    edit: "Sửa",
+    delete: "Xóa",
+    active: "Hoạt động",
+    inactive: "Chưa kích hoạt",
+    error: "Lỗi",
+    noAccounts: "Chưa có tài khoản nào. Hãy thêm tài khoản để bắt đầu!",
+    confirmDelete: "Bạn có chắc muốn xóa tài khoản này?",
+    addSuccess: "Đã thêm tài khoản thành công!",
+    deleteSuccess: "Đã xóa tài khoản!",
+    checking: "Đang kiểm tra..."
+  },
+
+  contents: {
+    title: "Quản lý nội dung",
+    addNew: "Tạo nội dung mới",
+    titleField: "Tiêu đề",
+    body: "Nội dung bài viết",
+    images: "Hình ảnh",
+    selectImages: "Chọn ảnh",
+    noImages: "Chưa có ảnh",
+    noContents: "Chưa có nội dung nào. Hãy tạo nội dung để sử dụng trong chiến dịch!",
+    confirmDelete: "Bạn có chắc muốn xóa nội dung này?",
+    preview: "Xem trước",
+    save: "Lưu",
+    cancel: "Hủy"
+  },
+
+  campaigns: {
+    title: "Quản lý chiến dịch",
+    addNew: "Tạo chiến dịch mới",
+    name: "Tên chiến dịch",
+    account: "Tài khoản",
+    content: "Nội dung",
+    groups: "Danh sách Groups",
+    groupsPlaceholder: "Nhập URL groups, mỗi dòng một URL",
+    maxConcurrent: "Số trình duyệt đồng thời",
+    status: "Trạng thái",
+    run: "Chạy ngay",
+    stop: "Dừng",
+    schedule: "Hẹn lịch",
+    viewResults: "Xem kết quả",
+    noCampaigns: "Chưa có chiến dịch nào.",
+    confirmDelete: "Bạn có chắc muốn xóa chiến dịch này?",
+    selectAccount: "Chọn tài khoản",
+    selectContent: "Chọn nội dung",
+    statusDraft: "Nháp",
+    statusRunning: "Đang chạy",
+    statusCompleted: "Hoàn thành",
+    statusFailed: "Lỗi",
+    statusScheduled: "Đã lên lịch",
+    statusStopped: "Đã dừng",
+    results: "Kết quả",
+    success: "Thành công",
+    failed: "Thất bại",
+    rerun: "Đăng lại"
+  },
+
+  schedule: {
+    title: "Lịch hẹn đăng bài",
+    scheduledAt: "Thời gian",
+    campaign: "Chiến dịch",
+    cancel: "Hủy lịch",
+    noScheduled: "Chưa có lịch hẹn nào.",
+    setSchedule: "Đặt lịch",
+    datetime: "Ngày giờ"
+  },
+
+  posts: {
+    title: "Danh sách Bài đã đăng",
+    noPosts: "Chưa có bài đăng nào.",
+    openPost: "Mở bài viết",
+    commentSingle: "Comment",
+    campaign: "Chiến dịch",
+    postedAt: "Ngày đăng",
+    confirmDelete: "Bạn có chắc muốn xoá bài đăng này khỏi danh sách?",
+    filterCampaign: "Lọc theo chiến dịch",
+    searchPlaceholder: "Tìm theo ID hoặc mô tả..."
+  },
+
+  commentCampaigns: {
+    title: "Chiến dịch Comment",
+    addNew: "Tạo chiến dịch mới",
+    name: "Tên chiến dịch",
+    account: "Tài khoản",
+    commentContent: "Nội dung comment",
+    commentImages: "Ảnh đính kèm",
+    addComment: "Thêm comment",
+    selectPosts: "Chọn bài đăng",
+    selectAll: "Chọn tất cả",
+    delayComments: "Delay giữa các comment",
+    delayPosts: "Delay giữa các bài đăng",
+    seconds: "giây",
+    run: "Chạy ngay",
+    rerun: "Chạy lại",
+    stop: "Dừng",
+    viewResults: "Xem kết quả",
+    noCampaigns: "Chưa có chiến dịch comment nào.",
+    confirmDelete: "Bạn có chắc muốn xoá chiến dịch comment này?"
+  },
+
+  logs: {
+    title: "Nhật ký hoạt động",
+    clear: "Xóa nhật ký",
+    noLogs: "Chưa có nhật ký nào.",
+    filter: "Lọc",
+    all: "Tất cả",
+    info: "Thông tin",
+    success: "Thành công",
+    warning: "Cảnh báo",
+    error: "Lỗi"
+  },
+
+  common: {
+    save: "Lưu",
+    cancel: "Hủy",
+    delete: "Xóa",
+    edit: "Sửa",
+    add: "Thêm",
+    close: "Đóng",
+    confirm: "Xác nhận",
+    search: "Tìm kiếm",
+    loading: "Đang tải...",
+    language: "Ngôn ngữ",
+    noData: "Không có dữ liệu"
+  },
+
+  validation: {
+    required: "Trường này là bắt buộc",
+    accountRequired: "Vui lòng nhập email hoặc số điện thoại",
+    accountInvalid: "Email hoặc số điện thoại không hợp lệ",
+    passwordRequired: "Vui lòng nhập mật khẩu",
+    passwordMin: "Mật khẩu phải có ít nhất 6 ký tự",
+    titleRequired: "Vui lòng nhập tiêu đề",
+    bodyRequired: "Vui lòng nhập nội dung bài viết",
+    nameRequired: "Vui lòng nhập tên chiến dịch",
+    accountSelect: "Vui lòng chọn tài khoản",
+    contentSelect: "Vui lòng chọn nội dung",
+    groupsRequired: "Vui lòng nhập ít nhất 1 URL group",
+    maxConcurrentMin: "Tối thiểu 1 trình duyệt",
+    maxConcurrentMax: "Tối đa 8 trình duyệt"
+  }
+};
