@@ -176,6 +176,6 @@ export const vi = {
     contentSelect: "Vui lòng chọn nội dung",
     groupsRequired: "Vui lòng nhập ít nhất 1 URL group",
     maxConcurrentMin: "Tối thiểu 1 trình duyệt",
-    maxConcurrentMax: "Tối đa 8 trình duyệt"
+    maxConcurrentMax: "Tối đa 4 trình duyệt"
   }
 };

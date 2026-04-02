@@ -1,3 +1,4 @@
+import { GradientButton } from "@/components/GradientButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,8 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Content, useAppStore } from "@/store";
 import { yupResolver } from "@hookform/resolvers/yup";
 import dayjs from "dayjs";
+import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Edit, ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -125,24 +126,27 @@ export default function ContentsScreen() {
     setImages([]);
   };
 
+  const OpenModalButton = ({ className }: { className?: string }) => {
+    return (
+      <GradientButton className={className} onClick={openAddModal}>
+        <Plus size={16} />
+        {t.contents.addNew}
+      </GradientButton>
+    );
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="gradient-text text-[28px] font-extrabold tracking-tight">{t.contents.title}</h1>
-        <Button onClick={openAddModal}>
-          <Plus size={16} />
-          {t.contents.addNew}
-        </Button>
+        <OpenModalButton />
       </div>
 
       {contents.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="bg-secondary mb-5 flex size-18 items-center justify-center rounded-2xl text-3xl">📝</div>
           <p className="text-muted-foreground max-w-100 text-[15px]">{t.contents.noContents}</p>
-          <Button className="mt-4" onClick={openAddModal}>
-            <Plus size={16} />
-            {t.contents.addNew}
-          </Button>
+          <OpenModalButton className="mt-4" />
         </div>
       ) : (
         <div className="grid gap-4">
@@ -156,47 +160,47 @@ export default function ContentsScreen() {
                 transition={{ duration: 0.2, delay: idx * 0.05 }}
               >
                 <Card>
-              <CardContent className="p-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-base font-bold uppercase">{content.title}</h3>
-                  <div className="flex gap-2">
-                    <Button size="icon" variant="secondary" className="size-8" onClick={() => handleEdit(content)}>
-                      <Edit size={14} />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="border-destructive/20 bg-destructive/15 text-destructive hover:bg-destructive/25 size-8"
-                      onClick={() => setConfirmDeleteId(content.id)}
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-muted-foreground mb-2 max-h-28 overflow-auto text-sm">{content.body}</p>
-                {content.images && content.images.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {content.images.map((imgPath, idx) => (
-                      <img
-                        key={idx}
-                        src={`local://${encodeURIComponent(imgPath)}`}
-                        alt={`img-${idx}`}
-                        className="border-border size-20 rounded-lg border object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ))}
-                    <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                      {content.images.length} {t.contents.images.toLowerCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="mt-4 text-xs text-muted-foreground">
-                  {dayjs(content.updatedAt).format("DD/MM/YYYY HH:mm:ss")}
-                </div>
-              </CardContent>
-            </Card>
+                  <CardContent className="p-6">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-base font-bold uppercase">{content.title}</h3>
+                      <div className="flex gap-2">
+                        <Button size="icon" variant="secondary" className="size-8" onClick={() => handleEdit(content)}>
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="border-destructive/20 bg-destructive/15 text-destructive hover:bg-destructive/25 size-8"
+                          onClick={() => setConfirmDeleteId(content.id)}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-muted-foreground mb-2 max-h-28 overflow-auto text-sm">{content.body}</p>
+                    {content.images && content.images.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {content.images.map((imgPath, idx) => (
+                          <img
+                            key={idx}
+                            src={`local://${encodeURIComponent(imgPath)}`}
+                            alt={`img-${idx}`}
+                            className="border-border size-20 rounded-lg border object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ))}
+                        <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                          {content.images.length} {t.contents.images.toLowerCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="text-muted-foreground mt-4 text-xs">
+                      {dayjs(content.updatedAt).format("DD/MM/YYYY HH:mm:ss")}
+                    </div>
+                  </CardContent>
+                </Card>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -225,8 +229,8 @@ export default function ContentsScreen() {
       </AlertDialog>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={closeModal}>
-        <DialogContent className="max-w-160">
+      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal={true}>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingContent ? t.common.edit : t.contents.addNew}</DialogTitle>
           </DialogHeader>
@@ -274,7 +278,7 @@ export default function ContentsScreen() {
                       variant="ghost"
                       size="icon"
                       onClick={() => removeImage(index)}
-                      className="absolute inset-0 flex h-full w-full cursor-pointer items-center justify-center rounded-xl opacity-0 transition-opacity duration-150 hover:bg-destructive/80 group-hover:opacity-100"
+                      className="hover:bg-destructive/80 absolute inset-0 flex h-full w-full cursor-pointer items-center justify-center rounded-xl opacity-0 transition-opacity duration-150 group-hover:opacity-100"
                       style={{ background: "rgba(255,107,107,0.75)" }}
                     >
                       <X size={20} className="text-white" />
@@ -284,11 +288,11 @@ export default function ContentsScreen() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-transparent p-0 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                  className="border-border text-muted-foreground hover:border-primary hover:text-primary flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed bg-transparent p-0 transition-colors"
                   onClick={handleSelectImages}
                 >
                   <ImagePlus size={22} className="mb-1" />
-                  <span className="text-[10px] font-medium leading-none">Thêm ảnh</span>
+                  <span className="text-[10px] leading-none font-medium">Thêm ảnh</span>
                 </Button>
               </div>
             </div>

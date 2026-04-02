@@ -1,5 +1,5 @@
-import { create } from "zustand";
 import { getTranslations, Language, Translations } from "@/i18n";
+import { create } from "zustand";
 
 export interface Account {
   id: string;
@@ -103,12 +103,18 @@ export interface LicenseInfo {
   daysLeft: number | null;
 }
 
+export interface AccountItem {
+  label: string;
+  value: string;
+}
+
 interface AppState {
   language: Language;
   t: Translations;
   setLanguage: (lang: Language) => void;
 
   accounts: Account[];
+  accountItems: AccountItem[];
   contents: Content[];
   campaigns: Campaign[];
   posts: Post[];
@@ -143,6 +149,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   accounts: [],
+  accountItems: [],
   contents: [],
   campaigns: [],
   posts: [],
@@ -159,7 +166,14 @@ export const useAppStore = create<AppState>((set) => ({
   license: null,
   setLicense: (info) => set({ license: info }),
 
-  setAccounts: (accounts) => set({ accounts }),
+  setAccounts: (accounts) =>
+    set({
+      accounts,
+      accountItems: accounts.map((acc) => ({
+        label: acc.name || acc.email,
+        value: acc.id
+      }))
+    }),
   setContents: (contents) => set({ contents }),
   setCampaigns: (campaigns) => set({ campaigns }),
   setPosts: (posts) => set({ posts }),

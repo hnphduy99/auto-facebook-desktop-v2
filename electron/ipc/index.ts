@@ -63,14 +63,13 @@ export function registerAllIPC(): void {
     sendCampaignUpdate(campaignService.getById(id));
 
     try {
-      const results = await browserService.runCampaign(
-        campaign.accountId,
-        content.body,
-        content.images,
-        campaign.groups,
-        campaign.maxConcurrent,
-        id
-      );
+      const results = await runApiFacebookPosts({
+        accountId: campaign.accountId,
+        groupUrls: campaign.groups,
+        message: content.body,
+        imagePaths: content.images,
+        jobId: id
+      });
 
       // --- NEW: Auto-save successful posts ---
       for (const r of results) {

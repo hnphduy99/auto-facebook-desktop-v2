@@ -20,6 +20,7 @@ export interface ApiFacebookPostParams {
   imagePaths?: string[];
   delayMin?: number; // ms, default 5000
   delayMax?: number; // ms, default 10000
+  jobId?: string; // Add jobId for flexible logging
 }
 
 export interface ApiFacebookPostResult {
@@ -27,6 +28,7 @@ export interface ApiFacebookPostResult {
   success: boolean;
   photoIds?: string[];
   error?: string;
+  postUrl?: string;
 }
 
 interface FbSession {
@@ -139,7 +141,7 @@ async function uploadPhotoRaw(
 }
 
 // ── Core steps ───
-async function getFbSession(accountId: string): Promise<FbSession> {
+async function getFbSession(accountId: string, jobId: string): Promise<FbSession> {
   const account = accountService.getById(accountId);
   if (!account) throw new Error("Không tìm thấy account");
 
@@ -186,14 +188,14 @@ async function getFbSession(accountId: string): Promise<FbSession> {
       const cookies = JSON.parse(fs.readFileSync(cookiesPath, "utf-8"));
       if (Array.isArray(cookies) && cookies.length > 0) {
         await page.setCookie(...cookies);
-        sendLog(`[API Post] Loaded cookies cho ${account.email}`, "info", JOB_ID);
+        sendLog(`[API Post] Loaded cookies cho ${account.email}`, "info", jobId);
       }
     } catch {
-      sendLog("[API Post] Không đọc được cookies", "warning", JOB_ID);
+      sendLog("[API Post] Không đọc được cookies", "warning", jobId);
     }
   }
 
-  sendLog("[API Post] Đang lấy fb_dtsg token...", "info", JOB_ID);
+  sendLog("[API Post] Đang lấy fb_dtsg token...", "info", jobId);
   await page.goto("https://www.facebook.com/", { waitUntil: "networkidle2", timeout: 60000 });
 
   // Extract dtsg from page HTML (most reliable method)
@@ -233,19 +235,19 @@ async function getFbSession(accountId: string): Promise<FbSession> {
   const cookieHeader = rawCookies.map((c) => `${c.name}=${c.value}`).join("; ");
 
   await browser.close();
-  sendLog(`[API Post] ✅ Session OK — uid: ${uid}`, "success", JOB_ID);
+  sendLog(`[API Post] ✅ Session OK — uid: ${uid}`, "success", jobId);
 
   return { dtsg, uid, ua, cookieHeader };
 }
 
 /** Resolve group numeric ID */
-async function resolveGroupId(session: FbSession, groupUrl: string): Promise<string | null> {
+async function resolveGroupId(session: FbSession, groupUrl: string, jobId: string): Promise<string | null> {
   // Numeric ID directly in URL
   const numMatch = groupUrl.match(/\/groups\/(\d+)/);
   if (numMatch) return numMatch[1];
 
   // Named group — fetch HTML
-  sendLog(`[API Post] Đang resolve Group ID từ: ${groupUrl}`, "info", JOB_ID);
+  sendLog(`[API Post] Đang resolve Group ID từ: ${groupUrl}`, "info", jobId);
   try {
     const res = await fetch(groupUrl, {
       headers: {
@@ -260,24 +262,24 @@ async function resolveGroupId(session: FbSession, groupUrl: string): Promise<str
     const m2 = text.match(/fb:\/\/group\/(\d+)/);
     if (m2) return m2[1];
   } catch (e: any) {
-    sendLog(`[API Post] Lỗi resolve group: ${e.message}`, "warning", JOB_ID);
+    sendLog(`[API Post] Lỗi resolve group: ${e.message}`, "warning", jobId);
   }
   return null;
 }
 
-async function uploadPhoto(session: FbSession, imagePath: string): Promise<string | null> {
+async function uploadPhoto(session: FbSession, imagePath: string, jobId: string): Promise<string | null> {
   if (!fs.existsSync(imagePath)) {
-    sendLog(`[API Post] File ảnh không tồn tại: ${imagePath}`, "warning", JOB_ID);
+    sendLog(`[API Post] File ảnh không tồn tại: ${imagePath}`, "warning", jobId);
     return null;
   }
-  sendLog("[API Post] Đang upload ảnh...", "info", JOB_ID);
+  sendLog("[API Post] Đang upload ảnh...", "info", jobId);
   try {
     const photoID = await uploadPhotoRaw(session.uid, session.dtsg, session.cookieHeader, session.ua, imagePath);
-    if (photoID) sendLog(`[API Post] ✅ Photo ID: ${photoID}`, "success", JOB_ID);
-    else sendLog("[API Post] Upload ảnh không trả về photo ID", "warning", JOB_ID);
+    if (photoID) sendLog(`[API Post] ✅ Photo ID: ${photoID}`, "success", jobId);
+    else sendLog("[API Post] Upload ảnh không trả về photo ID", "warning", jobId);
     return photoID;
   } catch (e: any) {
-    sendLog(`[API Post] Lỗi upload ảnh: ${e.message}`, "error", JOB_ID);
+    sendLog(`[API Post] Lỗi upload ảnh: ${e.message}`, "error", jobId);
     return null;
   }
 }
@@ -286,8 +288,9 @@ async function postToGroup(
   session: FbSession,
   targetId: string,
   message: string,
-  photoIds?: string[] | null
-): Promise<boolean> {
+  photoIds?: string[] | null,
+  jobId?: string
+): Promise<{ ok: boolean; postUrl?: string }> {
   let dtsgSum = 0;
   for (let i = 0; i < session.dtsg.length; i++) {
     dtsgSum += session.dtsg.charCodeAt(i);
@@ -431,32 +434,47 @@ async function postToGroup(
   const hasError =
     resText.includes('"errors"') || resText.includes('"error_code"') || resText.includes("Authentication");
 
+  let postUrl: string | undefined;
+
   if (hasError) {
-    sendLog(`[API Post] Lỗi đăng bài từ Facebook: ${resText}`, "error", JOB_ID);
+    sendLog(`[API Post] Lỗi đăng bài từ Facebook: ${resText}`, "error", jobId || JOB_ID);
   } else {
-    sendLog(`[API Post] Phản hồi GraphQL OK: ${resText.substring(0, 300)}...`, "info", JOB_ID);
+    try {
+      const lines = resText.split("\n");
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const json = JSON.parse(line);
+        if (json?.data?.story_create?.story?.url) {
+          postUrl = json.data.story_create.story.url;
+          break;
+        }
+      }
+    } catch {
+      // Ignore
+    }
+    sendLog(`[API Post] Phản hồi GraphQL OK, postUrl: ${postUrl || "Không có url"}`, "info", jobId || JOB_ID);
   }
 
-  return !hasError;
+  return { ok: !hasError, postUrl };
 }
 
 // ── Public entry ─────────────────────────────────────────────────────────────
 
 export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promise<ApiFacebookPostResult[]> {
-  const { accountId, groupUrls, message, imagePaths, delayMin = 5000, delayMax = 10000 } = params;
+  const { accountId, groupUrls, message, imagePaths, delayMin = 5000, delayMax = 10000, jobId = JOB_ID } = params;
 
-  sendLog(`[API Post] Bắt đầu chiến dịch: ${groupUrls.length} group(s)`, "info", JOB_ID);
+  sendLog(`[API Post] Bắt đầu chiến dịch: ${groupUrls.length} group(s)`, "info", jobId);
 
-  const session = await getFbSession(accountId);
+  const session = await getFbSession(accountId, jobId);
 
   const results: ApiFacebookPostResult[] = [];
 
   for (let i = 0; i < groupUrls.length; i++) {
     const url = groupUrls[i];
-    sendLog(`[API Post] [${i + 1}/${groupUrls.length}] ${url}`, "info", JOB_ID);
+    sendLog(`[API Post] [${i + 1}/${groupUrls.length}] ${url}`, "info", jobId);
 
     try {
-      const targetId = await resolveGroupId(session, url);
+      const targetId = await resolveGroupId(session, url, jobId);
       if (!targetId) {
         results.push({ groupUrl: url, success: false, error: "Không lấy được Group ID" });
         continue;
@@ -464,31 +482,38 @@ export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promis
 
       let currentPhotoIds: string[] = [];
       if (imagePaths && imagePaths.length > 0) {
-        const uploadPromises = imagePaths.map((imagePath) => uploadPhoto(session, imagePath));
+        const uploadPromises = imagePaths.map((imagePath) => uploadPhoto(session, imagePath, jobId));
         const pids = await Promise.all(uploadPromises);
         currentPhotoIds = pids.filter((pid): pid is string => Boolean(pid));
       }
 
-      const ok = await postToGroup(session, targetId, message, currentPhotoIds.length > 0 ? currentPhotoIds : null);
+      const { ok, postUrl } = await postToGroup(
+        session,
+        targetId,
+        message,
+        currentPhotoIds.length > 0 ? currentPhotoIds : null,
+        jobId
+      );
       if (ok) {
-        sendLog(`[API Post] ✅ Thành công: ${url}`, "success", JOB_ID);
+        sendLog(`[API Post] ✅ Thành công: ${url}`, "success", jobId);
         results.push({
           groupUrl: url,
           success: true,
-          photoIds: currentPhotoIds.length > 0 ? currentPhotoIds : undefined
+          photoIds: currentPhotoIds.length > 0 ? currentPhotoIds : undefined,
+          postUrl
         });
       } else {
-        sendLog(`[API Post] ❌ Thất bại: ${url}`, "error", JOB_ID);
+        sendLog(`[API Post] ❌ Thất bại: ${url}`, "error", jobId);
         results.push({ groupUrl: url, success: false, error: "API Facebook trả về lỗi" });
       }
     } catch (err: any) {
-      sendLog(`[API Post] Lỗi nhóm ${url}: ${err.message}`, "error", JOB_ID);
+      sendLog(`[API Post] Lỗi nhóm ${url}: ${err.message}`, "error", jobId);
       results.push({ groupUrl: url, success: false, error: err.message });
     }
 
     if (i < groupUrls.length - 1) {
       const wait = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-      sendLog(`[API Post] ⏳ Nghỉ ${(wait / 1000).toFixed(1)}s...`, "info", JOB_ID);
+      sendLog(`[API Post] ⏳ Nghỉ ${(wait / 1000).toFixed(1)}s...`, "info", jobId);
       await sleep(wait);
     }
   }
@@ -497,7 +522,7 @@ export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promis
   sendLog(
     `[API Post] Hoàn tất: ${successCount}/${results.length} thành công`,
     successCount === results.length ? "success" : "warning",
-    JOB_ID
+    jobId
   );
 
   return results;

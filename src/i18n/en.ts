@@ -176,6 +176,6 @@ export const en = {
     contentSelect: "Please select content",
     groupsRequired: "Please enter at least 1 group URL",
     maxConcurrentMin: "Minimum 1 browser",
-    maxConcurrentMax: "Maximum 8 browsers"
+    maxConcurrentMax: "Maximum 4 browsers"
   }
 };
