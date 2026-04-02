@@ -505,7 +505,7 @@ export default function CampaignsScreen() {
                     </Field>
                   )}
                 />
-                <Controller
+                {/* <Controller
                   name="maxConcurrent"
                   control={control}
                   render={({ field, fieldState }) => (
@@ -521,7 +521,7 @@ export default function CampaignsScreen() {
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
                   )}
-                />
+                /> */}
               </FieldGroup>
             </form>
           </div>
