@@ -15,7 +15,7 @@ export interface Campaign {
   contentId: string;
   groups: string[];
   maxConcurrent: number;
-  status: "draft" | "running" | "completed" | "failed" | "scheduled" | "stopped";
+  status: "draft" | "running" | "paused" | "completed" | "failed" | "scheduled" | "stopped";
   scheduledAt?: string;
   completedAt?: string;
   results?: CampaignResult[];

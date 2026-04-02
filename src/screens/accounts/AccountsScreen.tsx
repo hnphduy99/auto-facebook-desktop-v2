@@ -143,7 +143,7 @@ export default function AccountsScreen() {
         return {
           variant: "default" as const,
           label: t.accounts.active,
-          className: "bg-success text-success-foreground"
+          className: "bg-green-500/15 text-green-500"
         };
       case "error":
         return { variant: "destructive" as const, label: t.accounts.error, className: "" };
@@ -166,10 +166,10 @@ export default function AccountsScreen() {
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="bg-secondary mb-5 flex size-18 items-center justify-center rounded-2xl text-3xl">👤</div>
           <p className="text-muted-foreground max-w-100 text-[15px]">{t.accounts.noAccounts}</p>
-          <Button className="mt-4" onClick={openAddModal}>
+          <GradientButton className="mt-4" onClick={openAddModal}>
             <Plus size={16} />
             {t.accounts.addNew}
-          </Button>
+          </GradientButton>
         </div>
       ) : (
         <Table>
@@ -187,7 +187,7 @@ export default function AccountsScreen() {
               const badge = statusBadge(account.status);
               return (
                 <TableRow key={account.id}>
-                  <TableCell className="font-semibold">{account.name || "—"}</TableCell>
+                  <TableCell className="text-foreground font-semibold">{account.name || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{account.email}</TableCell>
                   <TableCell>
                     <Badge variant={badge.variant} className={badge.className}>
@@ -202,7 +202,7 @@ export default function AccountsScreen() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="border-success/20 bg-success/15 text-success hover:bg-success/25"
+                        className="bg-geeen-500/15 border-green-500/20 text-green-500 hover:bg-green-500/25"
                         onClick={() => handleCheck(account.id)}
                         disabled={checkingId === account.id}
                       >
@@ -255,7 +255,7 @@ export default function AccountsScreen() {
       </AlertDialog>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={closeModal}>
+      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editingAccount ? t.common.edit : t.accounts.addNew}</DialogTitle>

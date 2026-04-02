@@ -1,7 +1,7 @@
 import { app, dialog, ipcMain } from "electron";
 import fs from "fs";
 import path from "path";
-import { runApiFacebookPosts } from "../services/api-facebook.service.js";
+import { pauseApiFacebookCampaign, resumeApiFacebookCampaign, runApiFacebookPosts, stopApiFacebookCampaign } from "../services/api-facebook.service.js";
 import { accountService } from "../services/account.service.js";
 import { browserService } from "../services/browser.service.js";
 import { campaignService } from "../services/campaign.service.js";
@@ -125,7 +125,20 @@ export function registerAllIPC(): void {
 
   ipcMain.handle("campaigns:stop", async (_event, id) => {
     campaignService.update(id, { status: "stopped" });
+    stopApiFacebookCampaign(id);
     await browserService.stopCampaign(id);
+    sendCampaignUpdate(campaignService.getById(id));
+  });
+
+  ipcMain.handle("campaigns:pause", async (_event, id) => {
+    campaignService.update(id, { status: "paused" });
+    pauseApiFacebookCampaign(id);
+    sendCampaignUpdate(campaignService.getById(id));
+  });
+
+  ipcMain.handle("campaigns:resume", async (_event, id) => {
+    campaignService.update(id, { status: "running" });
+    resumeApiFacebookCampaign(id);
     sendCampaignUpdate(campaignService.getById(id));
   });
 

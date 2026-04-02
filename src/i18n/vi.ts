@@ -84,6 +84,7 @@ export const vi = {
     selectContent: "Chọn nội dung",
     statusDraft: "Nháp",
     statusRunning: "Đang chạy",
+    statusPaused: "Tạm dừng",
     statusCompleted: "Hoàn thành",
     statusFailed: "Lỗi",
     statusScheduled: "Đã lên lịch",
@@ -91,7 +92,9 @@ export const vi = {
     results: "Kết quả",
     success: "Thành công",
     failed: "Thất bại",
-    rerun: "Đăng lại"
+    rerun: "Đăng lại",
+    pause: "Tạm dừng",
+    resume: "Tiếp tục"
   },
 
   schedule: {
@@ -105,7 +108,7 @@ export const vi = {
   },
 
   posts: {
-    title: "Danh sách Bài đã đăng",
+    title: "Danh sách bài đã đăng",
     noPosts: "Chưa có bài đăng nào.",
     openPost: "Mở bài viết",
     commentSingle: "Comment",

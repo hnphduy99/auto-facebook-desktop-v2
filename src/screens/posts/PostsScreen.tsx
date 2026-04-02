@@ -64,7 +64,7 @@ export default function PostsScreen() {
 
   const uniqueCampaigns = Array.from(new Set(posts.map((p) => p.campaignId))).map((id) => {
     const p = posts.find((post) => post.campaignId === id);
-    return { id, name: p?.campaignName || id };
+    return { value: id, label: p?.campaignName || id };
   });
 
   return (
@@ -83,15 +83,15 @@ export default function PostsScreen() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={campaignFilter} onValueChange={(val) => setCampaignFilter(val || "")}>
-          <SelectTrigger className="max-w-50">
+        <Select items={uniqueCampaigns} value={campaignFilter} onValueChange={(val) => setCampaignFilter(val || "")}>
+          <SelectTrigger className="text-foreground max-w-50">
             <SelectValue placeholder={`${t.posts.filterCampaign}...`} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tất cả</SelectItem>
             {uniqueCampaigns.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
+              <SelectItem key={c.value} value={c.value}>
+                {c.label}
               </SelectItem>
             ))}
           </SelectContent>

@@ -30,7 +30,7 @@ export interface Campaign {
   contentId: string;
   groups: string[];
   maxConcurrent: number;
-  status: "draft" | "running" | "completed" | "failed" | "scheduled" | "stopped";
+  status: "draft" | "running" | "paused" | "completed" | "failed" | "scheduled" | "stopped";
   scheduledAt?: string;
   completedAt?: string;
   results?: { groupUrl: string; success: boolean; error?: string; postUrl?: string }[];
@@ -132,6 +132,8 @@ const api = {
   deleteCampaign: (id: string): Promise<void> => ipcRenderer.invoke("campaigns:delete", id),
   runCampaign: (id: string): Promise<void> => ipcRenderer.invoke("campaigns:run", id),
   stopCampaign: (id: string): Promise<void> => ipcRenderer.invoke("campaigns:stop", id),
+  pauseCampaign: (id: string): Promise<void> => ipcRenderer.invoke("campaigns:pause", id),
+  resumeCampaign: (id: string): Promise<void> => ipcRenderer.invoke("campaigns:resume", id),
 
   // Scheduler
   scheduleCampaign: (id: string, datetime: string): Promise<void> =>

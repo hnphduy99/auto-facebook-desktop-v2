@@ -1,3 +1,4 @@
+import { GradientButton } from "@/components/GradientButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -255,20 +256,20 @@ export default function CommentCampaignsScreen() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="gradient-text text-[28px] font-extrabold tracking-tight">{t.commentCampaigns.title}</h1>
-        <Button onClick={openAddModal}>
+        <GradientButton onClick={openAddModal}>
           <Plus size={16} />
           {t.commentCampaigns.addNew}
-        </Button>
+        </GradientButton>
       </div>
 
       {commentCampaigns.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="bg-secondary mb-5 flex size-18 items-center justify-center rounded-2xl text-3xl">💬</div>
           <p className="text-muted-foreground max-w-100 text-[15px]">{t.commentCampaigns.noCampaigns}</p>
-          <Button className="mt-4" onClick={openAddModal}>
+          <GradientButton className="mt-4" onClick={openAddModal}>
             <Plus size={16} />
             {t.commentCampaigns.addNew}
-          </Button>
+          </GradientButton>
         </div>
       ) : (
         <div className="space-y-3">
@@ -402,7 +403,7 @@ export default function CommentCampaignsScreen() {
       </AlertDialog>
 
       {/* Create/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={closeModal}>
+      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal>
         <DialogContent className="max-h-[90vh] max-w-175 overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingCampaign ? t.common.edit : t.commentCampaigns.addNew}</DialogTitle>
@@ -622,8 +623,8 @@ export default function CommentCampaignsScreen() {
       </Dialog>
 
       {/* Results Modal */}
-      <Dialog open={showResultsModal} onOpenChange={() => setShowResultsModal(false)}>
-        <DialogContent className="max-h-[85vh] max-w-160 overflow-y-auto">
+      <Dialog open={showResultsModal} onOpenChange={() => setShowResultsModal(false)} disablePointerDismissal>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {t.commentCampaigns.viewResults}: {selectedCampaign?.name}

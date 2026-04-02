@@ -1,3 +1,4 @@
+import { GradientButton } from "@/components/GradientButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,19 @@ import { cn } from "@/lib/utils";
 import { Campaign, useAppStore } from "@/store";
 import { yupResolver } from "@hookform/resolvers/yup";
 import dayjs from "dayjs";
-import { CalendarDays, CheckCircle, Edit, Loader2, Play, Plus, RefreshCw, Square, Trash2, X } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle,
+  Edit,
+  Loader2,
+  Pause,
+  Play,
+  Plus,
+  RefreshCw,
+  Square,
+  Trash2,
+  X
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -151,6 +164,18 @@ export default function CampaignsScreen() {
     toast.success("Đã khởi động tiến trình đăng bài!");
     window.api.runCampaign(id).catch(console.error);
   };
+  const handlePause = async (id: string) => {
+    if (!window.api) return;
+    await window.api.pauseCampaign(id);
+    toast.success("Đã tạm dừng chiến dịch.");
+    loadData();
+  };
+  const handleResume = async (id: string) => {
+    if (!window.api) return;
+    await window.api.resumeCampaign(id);
+    toast.success("Tiếp tục chiến dịch.");
+    loadData();
+  };
   const openScheduleModal = (c: Campaign) => {
     setSelectedCampaign(c);
     setScheduleDate(c.scheduledAt || "");
@@ -187,18 +212,23 @@ export default function CampaignsScreen() {
       running: {
         variant: "outline",
         label: t.campaigns.statusRunning,
-        className: "border-info/30 bg-info/15 text-info"
+        className: "border-blue-500/30 bg-blue-500/15 text-blue-500"
+      },
+      paused: {
+        variant: "outline",
+        label: t.campaigns.statusPaused || "Tạm dừng",
+        className: "border-yellow-500/30 bg-yellow-500/15 text-yellow-500"
       },
       completed: {
         variant: "default",
         label: t.campaigns.statusCompleted,
-        className: "bg-success text-success-foreground"
+        className: "bg-green-500/15 text-green-500"
       },
       failed: { variant: "destructive", label: t.campaigns.statusFailed },
       scheduled: {
         variant: "outline",
         label: t.campaigns.statusScheduled,
-        className: "border-warning/30 bg-warning/15 text-warning"
+        className: "border-yellow-500/30 bg-yellow-500/15 text-yellow-500"
       },
       stopped: { variant: "secondary", label: t.campaigns.statusStopped }
     };
@@ -218,20 +248,20 @@ export default function CampaignsScreen() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <h1 className="gradient-text text-[28px] font-extrabold tracking-tight">{t.campaigns.title}</h1>
-        <Button onClick={openAddModal}>
+        <GradientButton onClick={openAddModal}>
           <Plus size={16} />
           {t.campaigns.addNew}
-        </Button>
+        </GradientButton>
       </div>
 
       {campaigns.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="bg-secondary mb-5 flex size-18 items-center justify-center rounded-2xl text-3xl">🚀</div>
           <p className="text-muted-foreground max-w-100 text-[15px]">{t.campaigns.noCampaigns}</p>
-          <Button className="mt-4" onClick={openAddModal}>
+          <GradientButton className="mt-4" onClick={openAddModal}>
             <Plus size={16} />
             {t.campaigns.addNew}
-          </Button>
+          </GradientButton>
         </div>
       ) : (
         <div className="space-y-3">
@@ -276,7 +306,7 @@ export default function CampaignsScreen() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="border-success/20 bg-success/15 text-success hover:bg-success/25"
+                            className="border-green-500/20 bg-green-500/15 text-green-500 hover:bg-green-500/25"
                             onClick={() => handleRun(campaign.id)}
                           >
                             {campaign.status === "completed" ? <RefreshCw size={14} /> : <Play size={14} />}
@@ -288,11 +318,39 @@ export default function CampaignsScreen() {
                           </Button>
                         </>
                       )}
+                      {campaign.status === "paused" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-blue-500/20 bg-blue-500/15 text-blue-500 hover:bg-blue-500/25"
+                            onClick={() => handleResume(campaign.id)}
+                          >
+                            <Play size={14} />
+                            {t.campaigns.resume || "Tiếp tục"}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setConfirmStopId(campaign.id)}>
+                            <Square size={14} />
+                            {t.campaigns.stop}
+                          </Button>
+                        </>
+                      )}
                       {campaign.status === "running" && (
-                        <Button size="sm" variant="destructive" onClick={() => setConfirmStopId(campaign.id)}>
-                          <Square size={14} />
-                          {t.campaigns.stop}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-yellow-500/30 bg-yellow-500/15 text-yellow-500 hover:bg-yellow-500/25"
+                            onClick={() => handlePause(campaign.id)}
+                          >
+                            <Pause size={14} />
+                            {t.campaigns.pause || "Tạm dừng"}
+                          </Button>
+                          <Button size="sm" variant="destructive" onClick={() => setConfirmStopId(campaign.id)}>
+                            <Square size={14} />
+                            {t.campaigns.stop}
+                          </Button>
+                        </>
                       )}
                       {campaign.status === "scheduled" && (
                         <Button size="sm" variant="destructive" onClick={() => setConfirmStopId(campaign.id)}>
@@ -359,7 +417,7 @@ export default function CampaignsScreen() {
       </AlertDialog>
 
       {/* Create/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={closeModal}>
+      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingCampaign ? t.common.edit : t.campaigns.addNew}</DialogTitle>
@@ -489,7 +547,7 @@ export default function CampaignsScreen() {
       </Dialog>
 
       {/* Schedule Modal */}
-      <Dialog open={showScheduleModal} onOpenChange={() => setShowScheduleModal(false)}>
+      <Dialog open={showScheduleModal} onOpenChange={() => setShowScheduleModal(false)} disablePointerDismissal>
         <DialogContent className="max-w-100">
           <DialogHeader>
             <DialogTitle>{t.schedule.setSchedule}</DialogTitle>
@@ -513,8 +571,8 @@ export default function CampaignsScreen() {
       </Dialog>
 
       {/* Results Modal */}
-      <Dialog open={showResultsModal} onOpenChange={() => setShowResultsModal(false)}>
-        <DialogContent className="max-w-150">
+      <Dialog open={showResultsModal} onOpenChange={() => setShowResultsModal(false)} disablePointerDismissal>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>
               {t.campaigns.results}: {selectedCampaign?.name}
@@ -524,7 +582,7 @@ export default function CampaignsScreen() {
             {selectedCampaign?.results?.map((result, i) => (
               <div key={i} className="bg-secondary flex items-center justify-between rounded-lg p-3 text-sm">
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground max-w-75 truncate font-medium">{result.groupUrl}</span>
+                  <span className="text-muted-foreground max-w-90 truncate font-medium">{result.groupUrl}</span>
                   {result.postUrl && (
                     <a
                       href={result.postUrl}
@@ -538,7 +596,7 @@ export default function CampaignsScreen() {
                 </div>
                 <Badge
                   variant={result.success ? "default" : "destructive"}
-                  className={result.success ? "bg-success text-success-foreground" : ""}
+                  className={result.success ? "bg-green-500 text-white" : "bg-destructive text-destructive-foreground"}
                 >
                   {result.success ? t.campaigns.success : t.campaigns.failed}
                 </Badge>

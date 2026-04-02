@@ -229,7 +229,7 @@ export default function ContentsScreen() {
       </AlertDialog>
 
       {/* Add/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal={true}>
+      <Dialog open={showModal} onOpenChange={closeModal} disablePointerDismissal>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{editingContent ? t.common.edit : t.contents.addNew}</DialogTitle>

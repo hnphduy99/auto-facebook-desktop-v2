@@ -13,6 +13,20 @@ puppeteer.use(StealthPlugin());
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 const JOB_ID = "api-facebook";
 
+const activeApiCampaigns = new Set<string>();
+const pausedApiCampaigns = new Set<string>();
+
+export function stopApiFacebookCampaign(jobId: string) {
+  activeApiCampaigns.delete(jobId);
+  pausedApiCampaigns.delete(jobId);
+}
+export function pauseApiFacebookCampaign(jobId: string) {
+  pausedApiCampaigns.add(jobId);
+}
+export function resumeApiFacebookCampaign(jobId: string) {
+  pausedApiCampaigns.delete(jobId);
+}
+
 export interface ApiFacebookPostParams {
   accountId: string;
   groupUrls: string[];
@@ -463,59 +477,80 @@ async function postToGroup(
 export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promise<ApiFacebookPostResult[]> {
   const { accountId, groupUrls, message, imagePaths, delayMin = 5000, delayMax = 10000, jobId = JOB_ID } = params;
 
+  activeApiCampaigns.add(jobId);
   sendLog(`[API Post] Bắt đầu chiến dịch: ${groupUrls.length} group(s)`, "info", jobId);
 
-  const session = await getFbSession(accountId, jobId);
+  let session;
+  try {
+    session = await getFbSession(accountId, jobId);
+  } catch (err: any) {
+    activeApiCampaigns.delete(jobId);
+    sendLog(`[API Post] Lỗi khởi tạo session: ${err.message}`, "error", jobId);
+    return [];
+  }
 
   const results: ApiFacebookPostResult[] = [];
 
-  for (let i = 0; i < groupUrls.length; i++) {
-    const url = groupUrls[i];
-    sendLog(`[API Post] [${i + 1}/${groupUrls.length}] ${url}`, "info", jobId);
-
-    try {
-      const targetId = await resolveGroupId(session, url, jobId);
-      if (!targetId) {
-        results.push({ groupUrl: url, success: false, error: "Không lấy được Group ID" });
-        continue;
+  try {
+    for (let i = 0; i < groupUrls.length; i++) {
+      while (pausedApiCampaigns.has(jobId) && activeApiCampaigns.has(jobId)) {
+        await sleep(1000);
       }
 
-      let currentPhotoIds: string[] = [];
-      if (imagePaths && imagePaths.length > 0) {
-        const uploadPromises = imagePaths.map((imagePath) => uploadPhoto(session, imagePath, jobId));
-        const pids = await Promise.all(uploadPromises);
-        currentPhotoIds = pids.filter((pid): pid is string => Boolean(pid));
+      if (!activeApiCampaigns.has(jobId)) {
+        sendLog(`[API Post] Chiến dịch đã bị dừng!`, "warning", jobId);
+        break;
       }
 
-      const { ok, postUrl } = await postToGroup(
-        session,
-        targetId,
-        message,
-        currentPhotoIds.length > 0 ? currentPhotoIds : null,
-        jobId
-      );
-      if (ok) {
-        sendLog(`[API Post] ✅ Thành công: ${url}`, "success", jobId);
-        results.push({
-          groupUrl: url,
-          success: true,
-          photoIds: currentPhotoIds.length > 0 ? currentPhotoIds : undefined,
-          postUrl
-        });
-      } else {
-        sendLog(`[API Post] ❌ Thất bại: ${url}`, "error", jobId);
-        results.push({ groupUrl: url, success: false, error: "API Facebook trả về lỗi" });
+      const url = groupUrls[i];
+      sendLog(`[API Post] [${i + 1}/${groupUrls.length}] ${url}`, "info", jobId);
+
+      try {
+        const targetId = await resolveGroupId(session, url, jobId);
+        if (!targetId) {
+          results.push({ groupUrl: url, success: false, error: "Không lấy được Group ID" });
+          continue;
+        }
+
+        let currentPhotoIds: string[] = [];
+        if (imagePaths && imagePaths.length > 0) {
+          const uploadPromises = imagePaths.map((imagePath) => uploadPhoto(session, imagePath, jobId));
+          const pids = await Promise.all(uploadPromises);
+          currentPhotoIds = pids.filter((pid): pid is string => Boolean(pid));
+        }
+
+        const { ok, postUrl } = await postToGroup(
+          session,
+          targetId,
+          message,
+          currentPhotoIds.length > 0 ? currentPhotoIds : null,
+          jobId
+        );
+        if (ok) {
+          sendLog(`[API Post] ✅ Thành công: ${url}`, "success", jobId);
+          results.push({
+            groupUrl: url,
+            success: true,
+            photoIds: currentPhotoIds.length > 0 ? currentPhotoIds : undefined,
+            postUrl
+          });
+        } else {
+          sendLog(`[API Post] ❌ Thất bại: ${url}`, "error", jobId);
+          results.push({ groupUrl: url, success: false, error: "API Facebook trả về lỗi" });
+        }
+      } catch (err: any) {
+        sendLog(`[API Post] Lỗi nhóm ${url}: ${err.message}`, "error", jobId);
+        results.push({ groupUrl: url, success: false, error: err.message });
       }
-    } catch (err: any) {
-      sendLog(`[API Post] Lỗi nhóm ${url}: ${err.message}`, "error", jobId);
-      results.push({ groupUrl: url, success: false, error: err.message });
+
+      if (i < groupUrls.length - 1 && activeApiCampaigns.has(jobId)) {
+        const wait = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
+        sendLog(`[API Post] ⏳ Nghỉ ${(wait / 1000).toFixed(1)}s...`, "info", jobId);
+        await sleep(wait);
+      }
     }
-
-    if (i < groupUrls.length - 1) {
-      const wait = Math.floor(Math.random() * (delayMax - delayMin + 1)) + delayMin;
-      sendLog(`[API Post] ⏳ Nghỉ ${(wait / 1000).toFixed(1)}s...`, "info", jobId);
-      await sleep(wait);
-    }
+  } finally {
+    activeApiCampaigns.delete(jobId);
   }
 
   const successCount = results.filter((r) => r.success).length;
