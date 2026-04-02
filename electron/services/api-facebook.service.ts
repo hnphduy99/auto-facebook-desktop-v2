@@ -449,14 +449,6 @@ export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promis
 
   const session = await getFbSession(accountId);
 
-  let sharedPhotoIds: string[] = [];
-  if (imagePaths && imagePaths.length > 0) {
-    for (const imagePath of imagePaths) {
-      const pid = await uploadPhoto(session, imagePath);
-      if (pid) sharedPhotoIds.push(pid);
-    }
-  }
-
   const results: ApiFacebookPostResult[] = [];
 
   for (let i = 0; i < groupUrls.length; i++) {
@@ -470,13 +462,20 @@ export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promis
         continue;
       }
 
-      const ok = await postToGroup(session, targetId, message, sharedPhotoIds.length > 0 ? sharedPhotoIds : null);
+      let currentPhotoIds: string[] = [];
+      if (imagePaths && imagePaths.length > 0) {
+        const uploadPromises = imagePaths.map((imagePath) => uploadPhoto(session, imagePath));
+        const pids = await Promise.all(uploadPromises);
+        currentPhotoIds = pids.filter((pid): pid is string => Boolean(pid));
+      }
+
+      const ok = await postToGroup(session, targetId, message, currentPhotoIds.length > 0 ? currentPhotoIds : null);
       if (ok) {
         sendLog(`[API Post] ✅ Thành công: ${url}`, "success", JOB_ID);
         results.push({
           groupUrl: url,
           success: true,
-          photoIds: sharedPhotoIds.length > 0 ? sharedPhotoIds : undefined
+          photoIds: currentPhotoIds.length > 0 ? currentPhotoIds : undefined
         });
       } else {
         sendLog(`[API Post] ❌ Thất bại: ${url}`, "error", JOB_ID);

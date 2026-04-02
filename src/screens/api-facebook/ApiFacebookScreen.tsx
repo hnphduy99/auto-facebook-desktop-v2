@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAppStore } from "@/store";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
@@ -21,7 +22,24 @@ import {
   Zap
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import * as z from "zod";
+
+const formSchema = z
+  .object({
+    accountId: z.string().min(1, "Vui lòng chọn tài khoản"),
+    message: z.string().min(1, "Nội dung không được để trống"),
+    groupsText: z.string().min(1, "Vui lòng nhập ít nhất một Group URL"),
+    delayMin: z.number().min(1, "Tối thiểu 1 giây"),
+    delayMax: z.number().min(1, "Tối thiểu 1 giây")
+  })
+  .refine((data) => data.delayMax >= data.delayMin, {
+    message: "Delay tối đa phải lớn hơn hoặc bằng delay tối thiểu",
+    path: ["delayMax"]
+  });
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface PostResult {
   groupUrl: string;
@@ -36,37 +54,41 @@ interface RunState {
   error?: string;
 }
 
-const DEFAULT_DELAY_MIN = 5;
-const DEFAULT_DELAY_MAX = 10;
-
 export default function ApiFacebookScreen() {
   const { accounts, setAccounts } = useAppStore();
 
-  const [accountId, setAccountId] = useState("");
-  const [message, setMessage] = useState("");
-  const [groupsText, setGroupsText] = useState("");
+  const accountItems = accounts.map((account) => ({
+    value: account.id,
+    label: account.name
+  }));
+
   const [imagePaths, setImagePaths] = useState<string[]>([]);
-  const [delayMin, setDelayMin] = useState(DEFAULT_DELAY_MIN);
-  const [delayMax, setDelayMax] = useState(DEFAULT_DELAY_MAX);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [runState, setRunState] = useState<RunState>({ status: "idle", results: [] });
   const stopRef = useRef(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      accountId: "",
+      message: "",
+      groupsText: "",
+      delayMin: 3,
+      delayMax: 5
+    }
+  });
+
+  const { accountId, message, groupsText } = form.watch();
+  const groupUrls = groupsText
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const canRun = accountId && message.trim() && groupUrls.length > 0 && runState.status !== "running";
 
   useEffect(() => {
     if (!window.api) return;
     window.api.getAccounts().then(setAccounts).catch(console.error);
   }, [setAccounts]);
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  const groupUrls = groupsText
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0);
-
-  const canRun = accountId && message.trim() && groupUrls.length > 0 && runState.status !== "running";
-
-  // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleSelectImage = async () => {
     if (!window.api) return;
@@ -85,51 +107,48 @@ export default function ApiFacebookScreen() {
     setImagePaths((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleRun = async () => {
-    if (!window.api) {
-      toast.error("Electron API không khả dụng.");
-      return;
-    }
-    if (!canRun) return;
-
+  const onSubmit = async (values: FormValues) => {
+    if (!window.api) return;
+    const groupUrls = values.groupsText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
     stopRef.current = false;
     setRunState({ status: "running", results: [] });
 
     try {
       const res = await window.api.runApiFacebook({
-        accountId,
+        accountId: values.accountId,
         groupUrls,
-        message: message.trim(),
+        message: values.message.trim(),
         imagePaths: imagePaths.length > 0 ? imagePaths : undefined,
-        delayMin: delayMin * 1000,
-        delayMax: delayMax * 1000
+        delayMin: values.delayMin * 1000,
+        delayMax: values.delayMax * 1000
       });
 
+      setRunState({ status: "done", results: res.results || [] });
+
       if (res.success) {
-        setRunState({ status: "done", results: res.results });
-        const ok = res.results.filter((r) => r.success).length;
-        if (ok === res.results.length) toast.success(`✅ Đăng thành công ${ok}/${res.results.length} groups!`);
-        else toast.warning(`⚠️ ${ok}/${res.results.length} thành công, ${res.results.length - ok} thất bại`);
+        const ok = res.results.filter((r: any) => r.success).length;
+        toast.success(`✅ Đã xong! Thành công ${ok}/${res.results.length}`);
       } else {
-        setRunState({ status: "done", results: res.results ?? [], error: res.error });
+        setRunState((prev) => ({ ...prev, error: res.error }));
         toast.error("Lỗi: " + res.error);
       }
     } catch (e: any) {
       setRunState({ status: "done", results: [], error: e.message });
-      toast.error("Lỗi không mong muốn: " + e.message);
+      toast.error("Lỗi: " + e.message);
     }
   };
 
   const handleReset = () => {
     setRunState({ status: "idle", results: [] });
+    form.reset();
+    setImagePaths([]);
   };
-
-  // ── Stats ─────────────────────────────────────────────────────────────────
 
   const successCount = runState.results.filter((r) => r.success).length;
   const failCount = runState.results.filter((r) => !r.success).length;
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
@@ -151,194 +170,247 @@ export default function ApiFacebookScreen() {
       <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         {/* ── Left: Form ── */}
         <div className="space-y-4">
-          {/* Account */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Tài khoản</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={accountId} onValueChange={(val) => setAccountId(val as string)}>
-                <SelectTrigger id="api-account-select">
-                  <SelectValue placeholder="Chọn tài khoản..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((acc) => (
-                    <SelectItem key={acc.id} value={acc.id}>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`size-2 rounded-full ${
-                            acc.status === "active"
-                              ? "bg-green-500"
-                              : acc.status === "error"
-                                ? "bg-red-500"
-                                : "bg-gray-400"
-                          }`}
-                        />
-                        {acc.name || acc.email}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {accounts.length === 0 && (
-                <p className="text-muted-foreground mt-2 text-xs">
-                  Chưa có tài khoản nào. Vui lòng thêm tài khoản trước.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Message */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">Nội dung bài đăng</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                id="api-message"
-                placeholder="Nhập nội dung bài viết của bạn..."
-                rows={6}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="resize-none"
-              />
-
-              {/* Image picker */}
-              <div className="flex flex-col gap-3">
-                <Button
-                  id="api-select-image"
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleSelectImage}
-                  disabled={runState.status === "running"}
-                  className="w-max"
-                >
-                  <ImageIcon size={14} className="mr-2" /> Chọn ảnh
-                </Button>
-                {imagePaths.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    {imagePaths.map((p, i) => (
-                      <div
-                        key={i}
-                        className="bg-secondary flex items-center justify-between gap-2 rounded-md px-3 py-1.5 text-xs"
-                      >
-                        <span className="text-muted-foreground truncate">📎 {p.split(/[\\/]/).pop()}</span>
-                        <button
-                          onClick={() => handleRemoveImage(i)}
-                          className="text-muted-foreground hover:text-destructive"
+          <form id="form-api-post" onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <Controller
+                    control={form.control}
+                    name="accountId"
+                    render={({ field, fieldState }) => (
+                      <Field>
+                        <FieldLabel>Tài khoản</FieldLabel>
+                        <Select
+                          items={accountItems}
+                          name={field.name}
+                          value={field.value}
+                          onValueChange={field.onChange}
                         >
-                          <Trash2 size={12} />
-                        </button>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Chọn tài khoản..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {accountItems.map((acc) => (
+                              <SelectItem key={acc.value} value={acc.value}>
+                                {acc.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="space-y-4 pt-6">
+                  <Controller
+                    control={form.control}
+                    name="message"
+                    render={({ field, fieldState }) => (
+                      <Field>
+                        <FieldLabel>Nội dung bài đăng</FieldLabel>
+                        <Textarea {...field} placeholder="Nhập nội dung..." rows={6} className="resize-none" />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+
+                  <div className="space-y-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleSelectImage}
+                      disabled={runState.status === "running"}
+                    >
+                      <ImageIcon size={14} className="mr-2" /> Chọn ảnh
+                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      {imagePaths.map((p, i) => (
+                        <Badge key={i} variant="secondary" className="gap-2 px-3 py-1.5">
+                          <span className="max-w-37.5 truncate text-xs">📎 {p.split(/[\\/]/).pop()}</span>
+                          <Trash2
+                            size={12}
+                            className="hover:text-destructive cursor-pointer"
+                            onClick={() => handleRemoveImage(i)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <Controller
+                    control={form.control}
+                    name="groupsText"
+                    render={({ field, fieldState }) => (
+                      <Field>
+                        <FieldLabel className="flex justify-between">
+                          Danh sách Groups
+                          <Badge variant="outline">
+                            {field.value.split("\n").filter((l) => l.trim()).length} groups
+                          </Badge>
+                        </FieldLabel>
+                        <Textarea
+                          {...field}
+                          placeholder="Mỗi group URL một dòng..."
+                          rows={8}
+                          className="font-mono text-xs"
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <button
+                  type="button"
+                  className="hover:bg-accent/40 flex w-full items-center justify-between p-4 text-sm font-medium transition-colors"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                >
+                  <span className="flex items-center gap-2">
+                    <Zap size={14} className="text-primary" /> Cài đặt nâng cao
+                  </span>
+                  {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                <AnimatePresence>
+                  {showAdvanced && (
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: "auto" }}
+                      exit={{ height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="grid grid-cols-2 gap-4 border-t p-4">
+                        <Controller
+                          control={form.control}
+                          name="delayMin"
+                          render={({ field, fieldState }) => (
+                            <Field>
+                              <FieldLabel>Delay Min (s)</FieldLabel>
+                              <Input type="number" {...field} />
+                              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          control={form.control}
+                          name="delayMax"
+                          render={({ field, fieldState }) => (
+                            <Field>
+                              <FieldLabel>Delay Max (s)</FieldLabel>
+                              <Input type="number" {...field} />
+                              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            </Field>
+                          )}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Card>
+
+              <Button type="submit" className="w-full" size="lg" disabled={!canRun}>
+                {runState.status === "running" ? (
+                  <>
+                    <Loader2 size={18} className="mr-2 animate-spin" /> Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <Play size={18} className="mr-2" /> Bắt đầu đăng bài
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* ── Right Column: Results ── */}
+            <div className="space-y-4">
+              {runState.status !== "idle" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Kết quả</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {runState.status === "running" && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs">
+                          <span>Tiến độ:</span>
+                          <span>
+                            {runState.results.length} /{" "}
+                            {
+                              form
+                                .getValues("groupsText")
+                                .split("\n")
+                                .filter((l) => l.trim()).length
+                            }
+                          </span>
+                        </div>
+                        <div className="bg-secondary h-2 overflow-hidden rounded-full">
+                          <div
+                            className="bg-primary h-full transition-all"
+                            style={{
+                              width: `${
+                                (runState.results.length /
+                                  Math.max(
+                                    1,
+                                    form
+                                      .getValues("groupsText")
+                                      .split("\n")
+                                      .filter((l) => l.trim()).length
+                                  )) *
+                                100
+                              }%`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {runState.status === "done" && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-lg bg-green-500/10 p-3 text-center text-green-500">
+                          <p className="text-2xl font-bold">{successCount}</p>
+                          <p className="text-[10px] uppercase">Thành công</p>
+                        </div>
+                        <div className="rounded-lg bg-red-500/10 p-3 text-center text-red-500">
+                          <p className="text-2xl font-bold">{failCount}</p>
+                          <p className="text-[10px] uppercase">Thất bại</p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Chi tiết kết quả (giữ logic cũ của bạn) */}
+              {runState.results.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Chi tiết</CardTitle>
+                  </CardHeader>
+                  <CardContent className="max-h-96 space-y-2 overflow-y-auto">
+                    {runState.results.map((r, i) => (
+                      <div key={i} className="bg-secondary/50 flex items-center gap-2 rounded border p-2 text-xs">
+                        {r.success ? (
+                          <CheckCircle2 size={12} className="text-green-500" />
+                        ) : (
+                          <XCircle size={12} className="text-red-500" />
+                        )}
+                        <span className="flex-1 truncate">{r.groupUrl}</span>
                       </div>
                     ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Groups */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold">
-                Danh sách Groups
-                {groupUrls.length > 0 && (
-                  <Badge variant="secondary" className="ml-2 text-xs">
-                    {groupUrls.length} groups
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                id="api-groups"
-                placeholder={`https://www.facebook.com/groups/123456789\nhttps://www.facebook.com/groups/987654321`}
-                rows={8}
-                value={groupsText}
-                onChange={(e) => setGroupsText(e.target.value)}
-                className="resize-none font-mono text-xs"
-              />
-              <p className="text-muted-foreground mt-2 text-xs">Mỗi group URL mỗi dòng</p>
-            </CardContent>
-          </Card>
-
-          {/* Advanced settings */}
-          <Card>
-            <CardContent className="p-0">
-              <button
-                className="hover:bg-accent/40 flex w-full items-center justify-between p-4 text-sm font-medium transition-colors"
-                onClick={() => setShowAdvanced((v) => !v)}
-                id="api-toggle-advanced"
-              >
-                <span className="flex items-center gap-2">
-                  <Zap size={14} className="text-primary" />
-                  Cài đặt nâng cao
-                </span>
-                {showAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-
-              <AnimatePresence>
-                {showAdvanced && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="border-border space-y-4 border-t p-4">
-                      <p className="text-muted-foreground text-xs">
-                        Delay ngẫu nhiên giữa các lần đăng ({delayMin}–{delayMax} giây)
-                      </p>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="api-delay-min" className="text-xs">
-                            Delay tối thiểu (giây)
-                          </Label>
-                          <Input
-                            id="api-delay-min"
-                            type="number"
-                            min={1}
-                            max={delayMax}
-                            value={delayMin}
-                            onChange={(e) => setDelayMin(Math.max(1, Number(e.target.value)))}
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="api-delay-max" className="text-xs">
-                            Delay tối đa (giây)
-                          </Label>
-                          <Input
-                            id="api-delay-max"
-                            type="number"
-                            min={delayMin}
-                            max={300}
-                            value={delayMax}
-                            onChange={(e) => setDelayMax(Math.max(delayMin, Number(e.target.value)))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
-
-          {/* Run button */}
-          <Button id="api-run-btn" className="w-full" size="lg" disabled={!canRun} onClick={handleRun}>
-            {runState.status === "running" ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Đang đăng bài... ({runState.results.length}/{groupUrls.length})
-              </>
-            ) : (
-              <>
-                <Play size={18} /> Bắt đầu đăng bài
-              </>
-            )}
-          </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </form>
         </div>
 
         {/* ── Right: Results ── */}
@@ -453,7 +525,7 @@ export default function ApiFacebookScreen() {
                 </p>
                 <div className="text-muted-foreground mt-4 space-y-1.5 text-left text-xs">
                   <p>✅ Tận dụng cookies hiện có của account</p>
-                  <p>✅ Delay 5–10 giây giữa các bài</p>
+                  <p>✅ Delay 3–5 giây giữa các bài</p>
                   <p>✅ Hỗ trợ đăng kèm ảnh</p>
                   <p>⚡ Nhanh hơn automation thông thường</p>
                 </div>
