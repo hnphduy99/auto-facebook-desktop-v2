@@ -84,6 +84,7 @@ export const en = {
     selectContent: "Select Content",
     statusDraft: "Draft",
     statusRunning: "Running",
+    statusPaused: "Paused",
     statusCompleted: "Completed",
     statusFailed: "Failed",
     statusScheduled: "Scheduled",
@@ -91,7 +92,9 @@ export const en = {
     results: "Results",
     success: "Success",
     failed: "Failed",
-    rerun: "Re-run"
+    rerun: "Re-run",
+    pause: "Pause",
+    resume: "Resume"
   },
 
   schedule: {
