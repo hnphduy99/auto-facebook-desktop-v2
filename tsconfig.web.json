@@ -10,6 +10,7 @@
     "composite": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
+    "outDir": "./out/types",
     "paths": {
       "@/*": [
         "src/*"

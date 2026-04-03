@@ -5,7 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { useAppStore } from "@/store";
 import { AnimatePresence } from "framer-motion";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -18,16 +18,10 @@ const CommentCampaignsScreen = lazy(() => import("@/screens/comment-campaigns/Co
 const ScheduleScreen = lazy(() => import("@/screens/schedule/ScheduleScreen"));
 const LogsScreen = lazy(() => import("@/screens/logs/LogsScreen"));
 const LicenseScreen = lazy(() => import("@/screens/license/LicenseScreen"));
-const OnboardingScreen = lazy(() => import("@/screens/onboarding/OnboardingScreen"));
 const ApiFacebookScreen = lazy(() => import("@/screens/api-facebook/ApiFacebookScreen"));
-
-const DISCLAIMER_ACCEPTED_KEY = "disclaimer_accepted_v1";
 
 function AppShell() {
   const { addLog, updateCampaign, setLicense } = useAppStore();
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState<boolean>(
-    () => localStorage.getItem(DISCLAIMER_ACCEPTED_KEY) === "true"
-  );
   const location = useLocation();
 
   useEffect(() => {
@@ -55,20 +49,6 @@ function AppShell() {
       unsubCampaign();
     };
   }, [addLog, updateCampaign, setLicense]);
-
-  const handleAcceptDisclaimer = () => {
-    localStorage.setItem(DISCLAIMER_ACCEPTED_KEY, "true");
-    setDisclaimerAccepted(true);
-  };
-
-  if (!disclaimerAccepted) {
-    return (
-      <Suspense fallback={<PageLoader />}>
-        <OnboardingScreen onAccept={handleAcceptDisclaimer} />
-        <Toaster position="top-right" richColors />
-      </Suspense>
-    );
-  }
 
   return (
     <SidebarProvider defaultOpen>
