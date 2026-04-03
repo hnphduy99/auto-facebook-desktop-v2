@@ -24,21 +24,31 @@ export default function LogsScreen() {
 
   const levelIcon = (level: string) => {
     switch (level) {
-      case "info": return "ℹ️";
-      case "success": return "✅";
-      case "warning": return "⚠️";
-      case "error": return "❌";
-      default: return "📝";
+      case "info":
+        return "ℹ️";
+      case "success":
+        return "✅";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "❌";
+      default:
+        return "📝";
     }
   };
 
   const levelColor = (level: string) => {
     switch (level) {
-      case "info": return "text-info";
-      case "success": return "text-success";
-      case "warning": return "text-warning";
-      case "error": return "text-destructive";
-      default: return "text-muted-foreground";
+      case "info":
+        return "text-info";
+      case "success":
+        return "text-green-500";
+      case "warning":
+        return "text-yellow-500";
+      case "error":
+        return "text-destructive";
+      default:
+        return "text-muted-foreground";
     }
   };
 
@@ -47,7 +57,8 @@ export default function LogsScreen() {
       <div className="mb-8 flex items-center justify-between">
         <h1 className="gradient-text text-[28px] font-extrabold tracking-tight">{t.logs.title}</h1>
         <Button size="sm" variant="destructive" onClick={clearLogs}>
-          <Trash2 size={14} />{t.logs.clear}
+          <Trash2 size={14} />
+          {t.logs.clear}
         </Button>
       </div>
 
@@ -62,7 +73,7 @@ export default function LogsScreen() {
       </Tabs>
 
       <div className="mb-2 flex items-center justify-end gap-2">
-        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+        <label className="text-muted-foreground flex cursor-pointer items-center gap-1.5 text-xs">
           <input
             type="checkbox"
             checked={autoScroll}
@@ -75,20 +86,25 @@ export default function LogsScreen() {
 
       <Card>
         <CardContent className="p-4">
-          <ScrollArea className="h-[500px]">
-            <div className="font-mono text-xs">
+          <ScrollArea className="h-125">
+            <div className="text-xs">
               {filteredLogs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="mb-3 flex size-12 items-center justify-center rounded-2xl bg-secondary text-xl">📋</div>
+                  <div className="bg-secondary mb-3 flex size-12 items-center justify-center rounded-2xl text-xl">
+                    📋
+                  </div>
                   <p className="text-muted-foreground">{t.logs.noLogs}</p>
                 </div>
               ) : (
                 <>
                   {[...filteredLogs].reverse().map((log, index) => (
-                    <div key={index} className={`mb-1 flex items-start gap-3 rounded-lg px-3 py-1.5 ${levelColor(log.level)}`}>
-                      <span className="shrink-0 text-[11px] text-muted-foreground">{formatTime(log.timestamp)}</span>
+                    <div
+                      key={index}
+                      className={`mb-1 flex items-start gap-3 rounded-lg px-3 py-1.5 ${levelColor(log.level)}`}
+                    >
+                      <span className="text-muted-foreground shrink-0 text-[11px]">{formatTime(log.timestamp)}</span>
                       <span>{levelIcon(log.level)}</span>
-                      <span className="break-words">{log.message}</span>
+                      <span className="wrap-break-word">{log.message}</span>
                     </div>
                   ))}
                   <div ref={logEndRef} />

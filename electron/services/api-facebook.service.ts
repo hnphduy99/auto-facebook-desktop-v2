@@ -1,6 +1,7 @@
 import fs from "fs";
 import https from "https";
 import path from "path";
+import { LaunchOptions } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { v4 as uuidv4 } from "uuid";
@@ -161,7 +162,7 @@ async function getFbSession(accountId: string, jobId: string): Promise<FbSession
 
   const ua = getRandomUserAgent();
 
-  const launchConfig: any = {
+  const launchConfig: LaunchOptions = {
     headless: false,
     args: [
       "--no-sandbox",
@@ -171,8 +172,7 @@ async function getFbSession(accountId: string, jobId: string): Promise<FbSession
       "--disable-dev-shm-usage",
       "--disable-extensions",
       "--headless=true"
-    ],
-    userAgent: ua
+    ]
   };
 
   // Try local Chrome / Edge

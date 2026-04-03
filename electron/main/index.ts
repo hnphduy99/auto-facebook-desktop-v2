@@ -9,7 +9,7 @@ process.stderr?.on?.("error", (err: NodeJS.ErrnoException) => {
 });
 
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { app, BrowserWindow, net, protocol, shell } from "electron";
+import { app, BrowserWindow, dialog, net, protocol, shell } from "electron";
 import { pathToFileURL } from "node:url";
 import { join } from "path";
 import { registerAllIPC } from "../ipc/index.js";
@@ -78,7 +78,7 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   console.log("[Main] App ready. Registering IPC handlers...");
 
   // Set app user model id for windows
@@ -105,6 +105,28 @@ app.whenReady().then(() => {
   SchedulerService.getInstance().start();
   console.log("[Main] Scheduler started.");
 
+  // Check Chrome trước khi mở cửa sổ main
+  const chromePath = browserService.checkChromiumAvailable();
+  if (!chromePath) {
+    const { response } = await dialog.showMessageBox({
+      type: "warning",
+      title: "Không tìm thấy trình duyệt",
+      message: "Ứng dụng cần Chrome hoặc Microsoft Edge để hoạt động.",
+      detail:
+        "Vui lòng cài đặt Google Chrome hoặc Microsoft Edge, sau đó khởi động lại ứng dụng.\n",
+      buttons: ["Thoát", "Tải Google Chrome"],
+      defaultId: 0,
+      cancelId: 0
+    });
+
+    if (response === 1) {
+      shell.openExternal("https://www.google.com/chrome");
+    }
+    app.quit();
+    return;
+  }
+
+  console.log(`[Main] Chrome/Edge tìm thấy: ${chromePath}`);
   createWindow();
   console.log("[Main] Window created.");
 
