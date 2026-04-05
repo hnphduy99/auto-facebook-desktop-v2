@@ -33,8 +33,8 @@ export interface ApiFacebookPostParams {
   groupUrls: string[];
   message: string;
   imagePaths?: string[];
-  delayMin?: number; // ms, default 5000
-  delayMax?: number; // ms, default 10000
+  delayMin?: number; // ms
+  delayMax?: number; // ms
   jobId?: string; // Add jobId for flexible logging
 }
 
@@ -466,7 +466,7 @@ async function postToGroup(
     } catch {
       // Ignore
     }
-    sendLog(`[API Post] Phản hồi GraphQL OK, postUrl: ${postUrl || "Không có url"}`, "info", jobId || JOB_ID);
+    sendLog(`[API Post] Thành công, Link bài đăng: ${postUrl || "Không có url"}`, "info", jobId || JOB_ID);
   }
 
   return { ok: !hasError, postUrl };
@@ -475,7 +475,7 @@ async function postToGroup(
 // ── Public entry ─────────────────────────────────────────────────────────────
 
 export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promise<ApiFacebookPostResult[]> {
-  const { accountId, groupUrls, message, imagePaths, delayMin = 5000, delayMax = 10000, jobId = JOB_ID } = params;
+  const { accountId, groupUrls, message, imagePaths, delayMin = 3000, delayMax = 5000, jobId = JOB_ID } = params;
 
   activeApiCampaigns.add(jobId);
   sendLog(`[API Post] Bắt đầu chiến dịch: ${groupUrls.length} group(s)`, "info", jobId);
@@ -552,13 +552,6 @@ export async function runApiFacebookPosts(params: ApiFacebookPostParams): Promis
   } finally {
     activeApiCampaigns.delete(jobId);
   }
-
-  const successCount = results.filter((r) => r.success).length;
-  sendLog(
-    `[API Post] Hoàn tất: ${successCount}/${results.length} thành công`,
-    successCount === results.length ? "success" : "warning",
-    jobId
-  );
 
   return results;
 }

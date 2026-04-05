@@ -112,8 +112,7 @@ app.whenReady().then(async () => {
       type: "warning",
       title: "Không tìm thấy trình duyệt",
       message: "Ứng dụng cần Chrome hoặc Microsoft Edge để hoạt động.",
-      detail:
-        "Vui lòng cài đặt Google Chrome hoặc Microsoft Edge, sau đó khởi động lại ứng dụng.\n",
+      detail: "Vui lòng cài đặt Google Chrome hoặc Microsoft Edge, sau đó khởi động lại ứng dụng.\n",
       buttons: ["Thoát", "Tải Google Chrome"],
       defaultId: 0,
       cancelId: 0
@@ -126,7 +125,7 @@ app.whenReady().then(async () => {
     return;
   }
 
-  console.log(`[Main] Chrome/Edge tìm thấy: ${chromePath}`);
+  console.log(`[Main] Chrome/Edge found: ${chromePath}`);
   createWindow();
   console.log("[Main] Window created.");
 
